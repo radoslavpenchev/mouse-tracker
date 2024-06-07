@@ -11,14 +11,6 @@
         $(document).ready(function() {
             var socket = io();
 
-            $(document).mousemove(function(event) {
-                socket.emit('mouse_move', {x: event.pageX, y: event.pageY});
-            });
-
-            $(document).click(function(event) {
-                socket.emit('mouse_click', {x: event.pageX, y: event.pageY});
-            });
-
             socket.on('image_captured', function(data) {
                 alert(`Image captured at (${data.x}, ${data.y}) and saved to ${data.image_path}`);
             });
