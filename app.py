@@ -3,7 +3,6 @@ from flask_socketio import SocketIO
 from camera import Camera
 from database import Database
 from serial_reader import SerialReader
-from pynput import mouse
 
 class MouseTrackerApp:
     def __init__(self):
@@ -14,26 +13,28 @@ class MouseTrackerApp:
         self.camera = Camera()
         self.setup_routes()
 
-        self.listener = mouse.Listener(
-            on_move=self.on_move,
-            on_click=self.on_click
-        )
-        self.listener.start()
-
     def setup_routes(self):
         @self.app.route('/')
         def index():
             return render_template('index.html')
 
-    def on_move(self, x, y):
-        print(f"Mouse moved to ({x}, {y})")
+        @self.socketio.on('mouse_move')
+        def handle_mouse_move(data):
+            x = data['x']
+            y = data['y']
+            print(f"Mouse moved to ({x}, {y})")
+            self.socketio.emit('update_mouse_position', {'x': x, 'y': y})
 
-    def on_click(self, x, y, button, pressed):
-        if pressed:
+        @self.socketio.on('mouse_click')
+        def handle_mouse_click(data):
+            x = data['x']
+            y = data['y']
+            print(f"Mouse clicked at ({x}, {y})")
             image_path = self.camera.capture_image()
             if image_path:
                 self.db.insert_data(x, y, image_path)
                 self.socketio.emit('image_captured', {'x': x, 'y': y, 'image_path': image_path})
+            self.socketio.emit('update_click_position', {'x': x, 'y': y})
 
     def run(self):
         self.socketio.run(self.app, host='0.0.0.0', port=5000)
@@ -41,3 +42,4 @@ class MouseTrackerApp:
 if __name__ == '__main__':
     app = MouseTrackerApp()
     app.run()
+

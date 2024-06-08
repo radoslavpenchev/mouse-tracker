@@ -7,9 +7,29 @@
 </head>
 <body>
     <h1>Move your mouse and click to capture an image</h1>
+    <p>Mouse Position: <span id="mouse-position">0, 0</span></p>
+    <p>Last Click Position: <span id="click-position">0, 0</span></p>
     <script>
         $(document).ready(function() {
             var socket = io();
+
+            $(document).mousemove(function(event) {
+                var position = { x: event.pageX, y: event.pageY };
+                socket.emit('mouse_move', position);
+            });
+
+            $(document).click(function(event) {
+                var position = { x: event.pageX, y: event.pageY };
+                socket.emit('mouse_click', position);
+            });
+
+            socket.on('update_mouse_position', function(position) {
+                $('#mouse-position').text(`${position.x}, ${position.y}`);
+            });
+
+            socket.on('update_click_position', function(position) {
+                $('#click-position').text(`${position.x}, ${position.y}`);
+            });
 
             socket.on('image_captured', function(data) {
                 alert(`Image captured at (${data.x}, ${data.y}) and saved to ${data.image_path}`);
@@ -18,3 +38,4 @@
     </script>
 </body>
 </html>
+
